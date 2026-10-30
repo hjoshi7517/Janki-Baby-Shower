@@ -89,10 +89,16 @@ input,select{width:100%;padding:12px;border-radius:12px;border:1px solid var(--l
 <section class="card" id="rsvp">
 <h2>Will you join us?</h2>
 <div class="dl"><span>⏰ Please reply on or before</span><b>29 November 2026</b><small id="dl"></small></div>
-<p style="margin:16px 0 4px"><button class="btn" id="rb" type="button">RSVP here</button></p>
-<div id="fm" style="display:none;margin-top:14px"><iframe id="fr" title="RSVP form" style="width:100%;height:760px;border:0;border-radius:14px;background:#fff" loading="lazy">Loading…</iframe>
-<p class="note">Form not loading? <a href="https://docs.google.com/forms/d/e/1FAIpQLSddTJYai9X7ACkUFBXB7JxHplidoUaIG2uIcm-T-iHqzy4GMA/viewform" target="_blank" rel="noopener" style="color:var(--accent)">Tap here</a></p></div>
-<p class="note" id="nl">Takes less than a minute. No login needed.</p>
+<div id="fw">
+<label for="nm">Your name</label><input id="nm" autocomplete="name" placeholder="Full name">
+<label>Can you make it?</label>
+<div class="seg"><button type="button" class="btn alt on" data-v="Joyfully Yes">Joyfully yes</button><button type="button" class="btn alt" data-v="Sadly No">Sadly no</button></div>
+<div id="gw"><label for="gc">Number of guests (including you)</label><select id="gc"></select></div>
+<label for="cm">Comments or questions (optional)</label><input id="cm" placeholder="Anything you’d like to tell us?">
+<p style="margin-top:18px"><button class="btn" id="go" type="button">Send RSVP</button></p>
+<p class="note" id="err"></p>
+</div>
+<div id="ok" style="display:none"><h2>Thank you! 💙</h2><p>Your RSVP is in. We can’t wait to celebrate with you!</p></div>
 </section>
 
 <section class="card reg"><span class="bow">🎀</span><h2>Need a little help with gifting?</h2><p>Your blessings and presence are the best gift. But if you’re wondering what a tiny human actually needs (spoiler: a lot of tiny things), we’ve made a wish list to save you the guesswork. 🍼🧸</p><p><a class="btn" target="_blank" rel="noopener" href="https://www.amazon.ca/baby-reg/janki-joshi-february-2027-scarborough/2JX8YUOGS23UU">Peek inside our baby registry</a></p></section>
@@ -123,7 +129,26 @@ cv.addEventListener("pointerdown",function(e){down=true;cv.setPointerCapture(e.p
 cv.addEventListener("pointermove",sc2);cv.addEventListener("pointerup",function(){down=false});cv.addEventListener("pointercancel",function(){down=false});
 var gf=document.getElementById("gf"),pl=document.getElementById("pl");
 gf.onclick=function(){gf.style.display="none";pl.classList.add("show");for(var i=0;i<14;i++){var s=document.createElement("i");s.textContent=["🌸","❄","✨"][i%3];s.style.left=(10+Math.random()*80)+"%";s.style.fontSize=(14+Math.random()*14)+"px";s.style.animationDuration=(2+Math.random()*2)+"s";sn.appendChild(s);setTimeout(function(e){e.remove()}.bind(null,s),4500)}};
-document.getElementById("rb").onclick=function(){var f=document.getElementById("fr");if(!f.src)f.src="https://docs.google.com/forms/d/e/1FAIpQLSddTJYai9X7ACkUFBXB7JxHplidoUaIG2uIcm-T-iHqzy4GMA/viewform?embedded=true";document.getElementById("fm").style.display="block";this.style.display="none";document.getElementById("nl").style.display="none";f.scrollIntoView({behavior:"smooth",block:"start"})};
+// music: soft, slow lullaby made in the browser. Browsers only allow sound after a first tap, so it starts on the guest's first touch.
+(function(){var C=null,out=null,on=false,t=null,i=0,started=false;
+var ch=[[523.25,659.25,783.99,1046.5,783.99,659.25,783.99,659.25],[440,523.25,659.25,880,659.25,523.25,659.25,523.25],[440,523.25,698.46,880,698.46,523.25,698.46,523.25],[493.88,587.33,783.99,987.77,783.99,587.33,783.99,587.33]];
+function note(f){var n=C.currentTime;[[f,"triangle",.05],[f*2,"sine",.015]].forEach(function(x){var o=C.createOscillator(),g=C.createGain();o.type=x[1];o.frequency.value=x[0];g.gain.setValueAtTime(0,n);g.gain.linearRampToValueAtTime(x[2],n+.03);g.gain.exponentialRampToValueAtTime(.0001,n+3);o.connect(g);g.connect(out);o.start(n);o.stop(n+3.1)})}
+function step(){if(!on)return;var c=ch[Math.floor(i/8)%4];note(c[i%8]);i++;t=setTimeout(step,800)}
+function start(){if(started)return;started=true;try{var A=window.AudioContext||window.webkitAudioContext;C=new A();out=C.createGain();out.gain.value=.6;var d=C.createDelay();d.delayTime.value=.45;var fb=C.createGain();fb.gain.value=.35;d.connect(fb);fb.connect(d);out.connect(C.destination);out.connect(d);d.connect(C.destination);C.resume();on=true;step()}catch(e){}}
+["pointerdown","touchend","click","keydown"].forEach(function(e){document.addEventListener(e,start,{passive:true})});
+document.addEventListener("visibilitychange",function(){if(!started||!C)return;if(document.hidden){on=false;clearTimeout(t)}else if(!on){on=true;C.resume();step()}});
+})();
+// rsvp: sends answers straight into the Google Form, no Google page shown
+(function(){var FU="https://docs.google.com/forms/d/e/1FAIpQLSddTJYai9X7ACkUFBXB7JxHplidoUaIG2uIcm-T-iHqzy4GMA/formResponse",v="Joyfully Yes",gc=document.getElementById("gc"),busy=false;
+for(var n=1;n<=7;n++){var o=document.createElement("option");o.value="0"+n;o.textContent=n;gc.appendChild(o)}
+document.querySelectorAll(".seg button").forEach(function(b){b.onclick=function(){v=b.dataset.v;document.querySelectorAll(".seg button").forEach(function(x){x.classList.toggle("on",x===b)});document.getElementById("gw").style.display=v==="Sadly No"?"none":"block"}});
+document.getElementById("go").onclick=function(){var nm=document.getElementById("nm").value.trim(),err=document.getElementById("err");err.textContent="";if(busy)return;
+if(!nm){err.textContent="Please add your name.";return}
+busy=true;this.textContent="Sending…";var btn=this;
+var body=new URLSearchParams();body.append("entry.1498135098",nm);body.append("entry.877086558",v);body.append("entry.1424661284",v==="Sadly No"?"01":gc.value);body.append("entry.2606285",document.getElementById("cm").value.trim());
+function done(){document.getElementById("fw").style.display="none";document.getElementById("ok").style.display="block"}
+fetch(FU,{method:"POST",mode:"no-cors",body:body}).then(done).catch(function(){busy=false;btn.textContent="Send RSVP";err.innerHTML="Couldn’t send. Please check your internet or <a style='color:var(--accent)' target='_blank' rel='noopener' href='https://wa.me/"+HOST_WA+"?text="+encodeURIComponent("RSVP for Janki’s Baby Shower: "+nm+" — "+v)+"'>RSVP on WhatsApp</a>."})};
+})();
 // deadline
 var DL=new Date(2026,10,29,23,59,59).getTime(),dl=document.getElementById("dl"),dd=Math.ceil((DL-Date.now())/864e5);
 dl.textContent=dd>1?dd+" days left to RSVP":dd===1?"Last day to RSVP!":"RSVP date has passed. Please message the Joshi family directly.";
