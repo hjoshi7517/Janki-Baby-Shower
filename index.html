@@ -129,14 +129,31 @@ cv.addEventListener("pointerdown",function(e){down=true;cv.setPointerCapture(e.p
 cv.addEventListener("pointermove",sc2);cv.addEventListener("pointerup",function(){down=false});cv.addEventListener("pointercancel",function(){down=false});
 var gf=document.getElementById("gf"),pl=document.getElementById("pl");
 gf.onclick=function(){gf.style.display="none";pl.classList.add("show");for(var i=0;i<14;i++){var s=document.createElement("i");s.textContent=["🌸","❄","✨"][i%3];s.style.left=(10+Math.random()*80)+"%";s.style.fontSize=(14+Math.random()*14)+"px";s.style.animationDuration=(2+Math.random()*2)+"s";sn.appendChild(s);setTimeout(function(e){e.remove()}.bind(null,s),4500)}};
-// music: soft, slow lullaby made in the browser. Browsers only allow sound after a first tap, so it starts on the guest's first touch.
-(function(){var C=null,out=null,on=false,t=null,i=0,started=false;
-var ch=[[523.25,659.25,783.99,1046.5,783.99,659.25,783.99,659.25],[440,523.25,659.25,880,659.25,523.25,659.25,523.25],[440,523.25,698.46,880,698.46,523.25,698.46,523.25],[493.88,587.33,783.99,987.77,783.99,587.33,783.99,587.33]];
-function note(f){var n=C.currentTime;[[f,"triangle",.05],[f*2,"sine",.015]].forEach(function(x){var o=C.createOscillator(),g=C.createGain();o.type=x[1];o.frequency.value=x[0];g.gain.setValueAtTime(0,n);g.gain.linearRampToValueAtTime(x[2],n+.03);g.gain.exponentialRampToValueAtTime(.0001,n+3);o.connect(g);g.connect(out);o.start(n);o.stop(n+3.1)})}
-function step(){if(!on)return;var c=ch[Math.floor(i/8)%4];note(c[i%8]);i++;t=setTimeout(step,800)}
-function start(){if(started)return;started=true;try{var A=window.AudioContext||window.webkitAudioContext;C=new A();out=C.createGain();out.gain.value=.6;var d=C.createDelay();d.delayTime.value=.45;var fb=C.createGain();fb.gain.value=.35;d.connect(fb);fb.connect(d);out.connect(C.destination);out.connect(d);d.connect(C.destination);C.resume();on=true;step()}catch(e){}}
+// music: original slow, romantic piano-and-strings piece made in the browser. Sound can only start after the guest's first touch.
+(function(){var C=null,out=null,on=false,tm=null,k=0,nt=0,started=false,E=.42;
+var CH={G:[98,146.83,196,246.94,293.66],D:[73.42,110,146.83,185,220],Em:[82.41,123.47,164.81,196,246.94],C:[130.81,196,261.63,329.63,392],Am:[110,164.81,220,261.63,329.63]};
+var prog=["G","D","Em","C","G","D","C","D","C","G","Am","D","Em","C","D","G"];
+var mel=[[[587.33,3],[493.88,1],[587.33,4]],[[739.99,3],[587.33,1],[659.25,4]],[[659.25,2],[587.33,2],[493.88,4]],[[523.25,3],[659.25,1],[587.33,4]],
+[[587.33,2],[783.99,2],[739.99,2],[587.33,2]],[[659.25,3],[739.99,1],[587.33,4]],[[523.25,2],[587.33,2],[659.25,2],[523.25,2]],[[587.33,6],[0,2]],
+[[783.99,3],[659.25,1],[523.25,4]],[[493.88,2],[587.33,2],[783.99,4]],[[659.25,3],[523.25,1],[440,4]],[[587.33,2],[739.99,2],[880,4]],
+[[783.99,3],[659.25,1],[493.88,4]],[[523.25,2],[659.25,2],[783.99,4]],[[739.99,3],[587.33,1],[659.25,2],[739.99,2]],[[587.33,2],[493.88,2],[392,4]]];
+var pat=[0,1,2,3,4,3,2,1],ev=[];
+mel.forEach(function(bar,bi){var p=0;bar.forEach(function(x){if(x[0])ev[bi*8+p]={f:x[0],l:x[1]};p+=x[1]})});
+function key(f,t,d,v){var g=C.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.006);g.gain.exponentialRampToValueAtTime(.0001,t+d);g.connect(out);
+[[f,"sine",1],[f*2,"sine",.3],[f*3,"triangle",.08]].forEach(function(h){var o=C.createOscillator(),hg=C.createGain();o.type=h[1];o.frequency.value=h[0];hg.gain.value=h[2];o.connect(hg);hg.connect(g);o.start(t);o.stop(t+d+.05)})}
+function pad(c,t,d){var lp=C.createBiquadFilter(),g=C.createGain();lp.type="lowpass";lp.frequency.value=900;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.02,t+1);g.gain.setValueAtTime(.02,t+d-.8);g.gain.linearRampToValueAtTime(0,t+d+.8);lp.connect(g);g.connect(out);
+[c[1]*2,c[2],c[3]].forEach(function(f){[-3,3].forEach(function(dt){var o=C.createOscillator();o.type="sawtooth";o.frequency.value=f;o.detune.value=dt;o.connect(lp);o.start(t);o.stop(t+d+.9)})})}
+function play(i,t){var j=i%128,bar=Math.floor(j/8),pos=j%8,c=CH[prog[bar]];
+key(c[pat[pos]],t,2.2,.05);
+if(ev[j])key(ev[j].f,t,Math.min(ev[j].l*E+1.2,3.4),.085);
+if(pos===0)pad(c,t,8*E)}
+function sched(){while(nt<C.currentTime+.4){play(k,nt);k++;nt+=E}}
+function go(){nt=C.currentTime+.1;clearInterval(tm);tm=setInterval(sched,100)}
+function start(){if(started)return;started=true;try{var A=window.AudioContext||window.webkitAudioContext;C=new A();out=C.createGain();out.gain.value=.8;
+var d=C.createDelay();d.delayTime.value=.42;var fb=C.createGain();fb.gain.value=.3;var lp=C.createBiquadFilter();lp.type="lowpass";lp.frequency.value=2500;d.connect(lp);lp.connect(fb);fb.connect(d);out.connect(C.destination);out.connect(d);d.connect(C.destination);
+C.resume();on=true;go()}catch(e){}}
 ["pointerdown","touchend","click","keydown"].forEach(function(e){document.addEventListener(e,start,{passive:true})});
-document.addEventListener("visibilitychange",function(){if(!started||!C)return;if(document.hidden){on=false;clearTimeout(t)}else if(!on){on=true;C.resume();step()}});
+document.addEventListener("visibilitychange",function(){if(!started||!C)return;if(document.hidden){on=false;clearInterval(tm);C.suspend()}else if(!on){C.resume();on=true;go()}});
 })();
 // rsvp: sends answers straight into the Google Form, no Google page shown
 (function(){var FU="https://docs.google.com/forms/d/e/1FAIpQLSddTJYai9X7ACkUFBXB7JxHplidoUaIG2uIcm-T-iHqzy4GMA/formResponse",v="Joyfully Yes",gc=document.getElementById("gc"),busy=false;
